@@ -28,7 +28,7 @@
 
 1. Run the automation script:
    ```sh
-   node index.js
+   node main.js
    ```
 2. Provide the required test parameters when prompted.
 3. The script will automatically fetch, analyze, and submit answers while mimicking human behavior.
