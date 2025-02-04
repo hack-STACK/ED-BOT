@@ -1,27 +1,47 @@
-# Auto EngDis
-Unofficial Bot EngDis API.
+# ED Automation
 
-บอทสำหรับชาววัยรุ่น KMITL สำหรับวิชา FE1 และ FE2 ค้าบ
+**ED Automation** is an automated script designed to assist with test-taking workflows in educational environments. This project is for **educational purposes only** and should not be used for unethical activities.
 
-## How to use ?
-โคลนโปรเจคนี้ไปเลยยค้าบวัยรุ่นนนนน
+## 🚀 Features
 
-``` git clone https://github.com/BossNz/auto-engdis ```
+- Automates test-answer submission
+- Implements random delays to mimic human interaction
+- Randomizes answers for realistic behavior
+- Ensures accuracy while maintaining detection avoidance
 
-แล้วก็ลง package ทั้งหมดก่อน
-โดยใช้คำสั่ง
+## ⚙️ Installation
 
-``` npm install ```
+1. Clone this repository:
+   ```sh
+   git clone https://github.com/hack-STACK/ED-BOT.git
+   ```
+2. Navigate into the project directory:
+   ```sh
+   cd ED-BOT
+   ```
+3. Install dependencies:
+   ```sh
+   npm install
+   ```
 
-หลังจากลง package เสร็จแล้วสามารถใช้งานได้โดยใช้คำสั่ง
+## 🛠 Usage
 
-```js
-node .
-```
+1. Run the automation script:
+   ```sh
+   node index.js
+   ```
+2. Provide the required test parameters when prompted.
+3. The script will automatically fetch, analyze, and submit answers while mimicking human behavior.
 
-สามารถใช้งานได้แล้ววววววว !!!
+## ⚠️ Disclaimer
 
-## WARNING
-This project may be used only for **Educational Purposes**. Developers assume **no liability and are not responsible for any misuse or damage** caused by this program.
+This project is strictly for **educational and research purposes**. Any misuse of this tool is the sole responsibility of the user. The authors are not responsible for any consequences resulting from its use.
 
-ไม่แนะนำให้นำไปใช้โดย**เด็ดขาด** ใช้เพื่อการศึกษา**เท่านั้น**
+## 📜 License
+
+This project is open-source and provided under the [MIT License](LICENSE).
+
+---
+
+💡 **Note:** Always ensure compliance with ethical guidelines when using automation tools.
+
