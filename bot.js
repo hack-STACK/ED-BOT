@@ -48,7 +48,7 @@ class Main {
 
   printWelcome() {
     console.clear();
-    console.log(figlet.textSync("English Discoveries.\n\nCreated by : ALEGRE"));
+    console.log(figlet.textSync("English Discoveries 1.0.0.\n\nCreated by : ALEGRE"));
     console.log(
       "[!] Bot untuk student SMK TELKOM! Latest update at 03/02/25.\n"
     );
@@ -169,9 +169,22 @@ class Main {
       this.selectedUnit.NodeId,
       this.selectedUnit.ParentNodeId
     );
+
+    // Misal: jika courseTree.data bukan array, periksa apakah ada properti 'levels'
+    const levels = Array.isArray(courseTree.data)
+      ? courseTree.data
+      : Array.isArray(courseTree.data.levels)
+      ? courseTree.data.levels
+      : [];
+
+    if (levels.length === 0) {
+      console.log("[!] Tidak ada level yang ditemukan untuk unit ini.");
+      process.exit();
+    }
+
     console.log("\n[*] Daftar Level:");
     console.table(
-      courseTree.data.map((item, index) => ({
+      levels.map((item, index) => ({
         Index: index,
         Id: item.NodeId,
         Name: item.Name,
@@ -179,7 +192,7 @@ class Main {
     );
 
     const levelIndex = prompt("[?] Pilih level (masukkan index): ");
-    this.selectedLevel = courseTree.data[Number(levelIndex)];
+    this.selectedLevel = levels[Number(levelIndex)];
     if (!this.selectedLevel) {
       console.log("[!] Pilihan tidak valid. Keluar.");
       process.exit();
@@ -263,82 +276,125 @@ class Main {
     }
   }
 
-  /**
-   * Memproses test.
-   * Jika nilai akhir test kurang dari 85, data jawaban akan disalin ke clipboard.
-   */ async setTest85To100Percent(code, nodeId, parentNodeId) {
+
+   async setTest85To100Percent(code, nodeId, parentNodeId) {
+  try {
+    // Fetch test data (lesson) using the given code
     const testData = await this.engdis.getTestCodeDigit(code);
-    var submitAnswer = [];
+    if (!testData || !testData.tasks || !Array.isArray(testData.tasks)) {
+      console.error("    [!] Format data test tidak valid.");
+      return;
+    }
+    
+    let submitAnswer = [];
 
-    for (var data of testData["tasks"]) {
+    // Process each task in the test data
+    for (const data of testData["tasks"]) {
       const id = data["id"];
-      const code = data["code"];
+      const taskCode = data["code"];
       const type = data["type"];
-      const testAnswerData = await this.engdis.practiceGetItem(code);
-
-      if (testAnswerData["data"]["i"]["q"].length > 1) {
-        for (var i = 1; i < testAnswerData["data"]["i"]["q"].length; i++) {
-          testAnswerData["data"]["i"]["q"][0]["al"] = testAnswerData["data"][
-            "i"
-          ]["q"][0]["al"].concat(testAnswerData["data"]["i"]["q"][i]["al"]);
-        }
+      
+      // Fetch answer data for the current task
+      const testAnswerData = await this.engdis.practiceGetItem(taskCode);
+      if (!testAnswerData ||
+          !testAnswerData.data ||
+          !testAnswerData.data.i ||
+          !testAnswerData.data.i.q) {
+        console.error(`    [!] Format data jawaban test tidak valid untuk task ${taskCode}.`);
+        continue;
       }
 
-      const correctAnswerList = testAnswerData["data"]["i"]["q"][0]["al"];
-
-      if (correctAnswerList.length == 0) continue;
-      const foundC = correctAnswerList[0]["a"].filter(
-        (item) => item["c"] == "1"
-      );
-
-      if (foundC.length != 0) {
-        const answerUa = correctAnswerList.map((obj) => [
-          obj.id,
-          obj.a.find((answer) => answer.c === "1").id,
-        ]);
-
+      // If there are multiple question parts, combine their answer lists
+      if (testAnswerData.data.i.q.length > 1) {
+        for (let i = 1; i < testAnswerData.data.i.q.length; i++) {
+          testAnswerData.data.i.q[0].al = testAnswerData.data.i.q[0].al.concat(
+            testAnswerData.data.i.q[i].al
+          );
+        }
+      }
+      
+      const correctAnswerList = testAnswerData.data.i.q[0]["al"];
+      if (!correctAnswerList || correctAnswerList.length === 0) continue;
+      
+      // Simulate a navigation delay (2-6 seconds)
+      const navigationDelay = Math.floor(Math.random() * 4000) + 2000;
+      await new Promise((resolve) => setTimeout(resolve, navigationDelay));
+      
+      let answerUa;
+      // Check if a correct answer is marked for the first question part
+      const foundC = correctAnswerList[0]["a"].filter(item => item["c"] == "1");
+      if (foundC.length !== 0) {
+        // For each question, if multiple correct answers exist, choose one randomly 80% of the time
+        answerUa = correctAnswerList.map(obj => {
+          const correctAnswers = obj.a.filter(answer => answer.c === "1");
+          let selectedAnswerId;
+          if (correctAnswers.length > 1 && Math.random() < 0.8) {
+            const randomIndex = Math.floor(Math.random() * correctAnswers.length);
+            selectedAnswerId = correctAnswers[randomIndex].id;
+          } else {
+            selectedAnswerId = correctAnswers[0].id;
+          }
+          return [obj.id, selectedAnswerId];
+        });
+        
         submitAnswer.push({
           iId: id,
-          iCode: code,
+          iCode: taskCode,
           iType: type,
           ua: [
             {
               qId: 1,
-              aId: answerUa,
-            },
-          ],
+              aId: answerUa
+            }
+          ]
         });
       } else {
-        var uaList = [];
-
+        // Fallback: if no answer is marked as correct, choose the first available answer for each question
+        let uaList = [];
         for (const ans of correctAnswerList) {
           uaList.push({
             qId: "1",
-            aId: [[ans["id"], ans["a"][0]["id"]]],
+            aId: [
+              [
+                ans["id"],
+                ans["a"][0]["id"]
+              ]
+            ]
           });
         }
-
         submitAnswer.push({
           iId: id,
-          iCode: code,
+          iCode: taskCode,
           iType: type,
-          ua: uaList,
+          ua: uaList
         });
       }
+      
+      // Simulate a typing delay (1-4 seconds per task)
+      const typingDelay = Math.floor(Math.random() * 3000) + 1000;
+      await new Promise((resolve) => setTimeout(resolve, typingDelay));
     }
-
-    const testStatus = await this.engdis.SaveUserTestV1(
-      nodeId,
-      parentNodeId,
-      submitAnswer
-    );
-    console.log(testStatus["data"]["finalMark"]);
-
-    if (testStatus["data"]["finalMark"] != "100") {
+    
+    // Introduce a small chance (5%) to skip submitting answers to simulate human inconsistency
+    if (Math.random() < 0.05) {
+      console.log("    [!] Bot memutuskan untuk tidak mengirim jawaban kali ini.");
+      return;
+    }
+    
+    // Submit the answers
+    const testStatus = await this.engdis.SaveUserTestV1(nodeId, parentNodeId, submitAnswer);
+    const finalMark = testStatus.data.finalMark;
+    console.log(`    [#] Nilai test: ${finalMark}`);
+    
+    // If the final mark is not 100, copy the answer payload to the clipboard for further review
+    if (finalMark != "100") {
       clipboardy.writeSync(JSON.stringify(submitAnswer));
-      console.log(testStatus["data"]["finalMark"]);
+      console.log("    [!] Nilai test tidak 100%. Data jawaban disalin ke clipboard.");
     }
+  } catch (error) {
+    console.error(`    [!] Error pada setTest100Percent: ${error.message}`);
   }
+}
 
   /**
    * Menampilkan progress untuk masing-masing unit dan (jika ada) level.
